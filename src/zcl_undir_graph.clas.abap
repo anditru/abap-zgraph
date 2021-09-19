@@ -38,19 +38,19 @@ ENDCLASS.
 
 CLASS zcl_undir_graph IMPLEMENTATION.
   METHOD add_edge.
-    me->gt_adjacency_matrix = VALUE #( BASE me->gt_adjacency_matrix
+    me->gt_edges = VALUE #( BASE me->gt_edges
         ( from = iv_from to = iv_to weight = iv_weight ) ).
-    me->gt_adjacency_matrix = VALUE #( BASE me->gt_adjacency_matrix
+    me->gt_edges = VALUE #( BASE me->gt_edges
         ( from = iv_to to = iv_from weight = iv_weight ) ).
   ENDMETHOD.
 
   METHOD remove_edge.
-    DELETE TABLE me->gt_adjacency_matrix FROM VALUE #( from = iv_from to = iv_to ).
-    DELETE TABLE me->gt_adjacency_matrix FROM VALUE #( from = iv_to to = iv_from ).
+    DELETE TABLE me->gt_edges FROM VALUE #( from = iv_from to = iv_to ).
+    DELETE TABLE me->gt_edges FROM VALUE #( from = iv_to to = iv_from ).
   ENDMETHOD.
 
   METHOD get_neighbors.
-    LOOP AT me->gt_adjacency_matrix ASSIGNING FIELD-SYMBOL(<fs_adjacency_line>) WHERE from = iv_node.
+    LOOP AT me->gt_edges ASSIGNING FIELD-SYMBOL(<fs_adjacency_line>) WHERE from = iv_node.
       rt_neighbors = VALUE #( BASE rt_neighbors ( node = <fs_adjacency_line>-to ) ).
     ENDLOOP.
   ENDMETHOD.
@@ -60,7 +60,7 @@ CLASS zcl_undir_graph IMPLEMENTATION.
     rt_shortest_paths = VALUE #( BASE rt_shortest_paths
       ( node = iv_start distance = 0 visited = abap_false )
     ).
-    LOOP AT me->gt_node_list ASSIGNING FIELD-SYMBOL(<fs_node>) WHERE node NE iv_start.
+    LOOP AT me->gt_nodes ASSIGNING FIELD-SYMBOL(<fs_node>) WHERE node NE iv_start.
       rt_shortest_paths = VALUE #( BASE rt_shortest_paths
         ( node = <fs_node>-node distance = 2147483647 visited = abap_false  )
       ).
@@ -73,7 +73,7 @@ CLASS zcl_undir_graph IMPLEMENTATION.
       LOOP AT me->get_neighbors( <fs_current_line>-node ) INTO DATA(neighbor).
         READ TABLE rt_shortest_paths ASSIGNING FIELD-SYMBOL(<fs_neighbor_line>) WITH KEY node = neighbor-node.
         IF <fs_neighbor_line>-visited = abap_false.
-          DATA(alternate_dist) = CONV int8( <fs_current_line>-distance ) + me->gt_adjacency_matrix[ from = <fs_current_line>-node to = <fs_neighbor_line>-node ]-weight.
+          DATA(alternate_dist) = CONV int8( <fs_current_line>-distance ) + me->gt_edges[ from = <fs_current_line>-node to = <fs_neighbor_line>-node ]-weight.
           IF alternate_dist LT <fs_neighbor_line>-distance.
             <fs_neighbor_line>-distance = alternate_dist.
             <fs_neighbor_line>-prev_node = <fs_current_line>-node.
